@@ -14,6 +14,7 @@ def datos():
     data={
         "hora":datetime.datetime.now(),
         "asignatura":"ACO"
+
     }
     return render_template('datos.html',**data)
 
