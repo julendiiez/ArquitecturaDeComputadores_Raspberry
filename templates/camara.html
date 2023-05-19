@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Transmisión en vivo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      text-align: center;
+      padding: 50px;
+    }
+
+    .container video {
+      display: block;
+      margin: 0 auto;
+      max-width: 450px;
+      border: 5px solid #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      background-color: #000;
+    }
+
+    .container button {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+      border-radius: 5px;
+    }
+
+    .container button:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Transmisión en vivo</h1>
+  </header>
+
+  <div class="container">
+    <video id="live-video" autoplay></video>
+    <button onclick="goBack()">Volver atrás</button>
+  </div>
+
+  <script>
+    // Obtener el elemento de video
+    var video = document.getElementById('live-video');
+
+    // Acceder a la cámara del dispositivo
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(function(stream) {
+        // Asignar el flujo de video a la etiqueta de video
+        video.srcObject = stream;
+      })
+      .catch(function(error) {
+        console.log('Error al acceder a la cámara: ', error);
+      });
+
+    // Función para volver atrás
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+</body>
+</html>

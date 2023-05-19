@@ -8,7 +8,13 @@ app=Flask(__name__)
 @app.route('/')#Se llama a la funcion sobre la url principal
 
 def home():
-    return render_template('home.html')
+    return render_template('inicio.html')
+
+
+@app.route('/camara')
+
+def camara():
+    return render_template('camara.html')
 
 def datos():
     data={
