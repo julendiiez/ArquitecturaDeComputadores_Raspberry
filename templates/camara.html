@@ -52,28 +52,13 @@
   </header>
 
   <div class="container">
-    <video id="live-video" autoplay></video>
-    <button onclick="goBack()">Volver atrás</button>
+
+    <img src="{{ url_for('video_feed') }}" width="640" height="400">    
   </div>
 
-  <script>
-    // Obtener el elemento de video
-    var video = document.getElementById('live-video');
+  
 
-    // Acceder a la cámara del dispositivo
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(function(stream) {
-        // Asignar el flujo de video a la etiqueta de video
-        video.srcObject = stream;
-      })
-      .catch(function(error) {
-        console.log('Error al acceder a la cámara: ', error);
-      });
 
-    // Función para volver atrás
-    function goBack() {
-      window.history.back();
-    }
-  </script>
+  
 </body>
 </html>
