@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Transmisión en vivo</title>
+  <title>Mi huerta</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,49 +16,57 @@
       text-align: center;
     }
 
-    .container {
+    nav {
+      background-color: #f1f1f1;
+      padding: 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    li {
+      display: inline-block;
+      margin-right: 20px;
+    }
+
+    a {
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .cover {
       text-align: center;
       padding: 50px;
     }
 
-    .container video {
-      display: block;
-      margin: 0 auto;
-      max-width: 450px;
-      border: 5px solid #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-      background-color: #000;
-    }
-
-    .container button {
-      background-color: #333;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 20px;
-      border-radius: 5px;
-    }
-
-    .container button:hover {
-      background-color: #555;
+    .cover img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Transmisión en vivo</h1>
+    <h1>Mi huerta</h1>
   </header>
 
-  <div class="container">
+  <nav>
+    <ul>
+      <li><a href="/">Inicio</a></li>  
+      <li><a href="/temperaturayhumedad">Datos</a></li>
+      <li><a href="/video_feed">Cámara</a></li>
+    </ul>
+  </nav>
 
-    <img src="{{ url_for('video_feed') }}" width="640" height="400">    
-  </div>
+  <section>
+    <h2>Camara</h2>
+  </section>
 
-  
-
-
-  
 </body>
 </html>

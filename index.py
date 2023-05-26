@@ -1,33 +1,35 @@
 #import cv2
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, jsonify
 import RPi.GPIO as GPIO
 import Adafruit_DHT
 import time
+import datetime
 import requests
 from bs4 import BeautifulSoup
 import threading
+import signal
+import sys
 
 GPIO.setmode(GPIO.BCM)
-analog_pin = 18
+pin_moisture = 2
 sensor= Adafruit_DHT.DHT11
-pin = 16
+pintempyhumedad = 16
 led_pin = 5
-
-
-
-
+button_pin=22
+led_camara=18
 app = Flask(__name__)
 
 def temperaturahumedad():
     global temperature_global, humiditysensor1_global
-    humiditysensor1_global, temperature_global = Adafruit_DHT.read_retry(sensor, pin)
-    GPIO.setup(analog_pin, GPIO.IN)
-    time.sleep(0.1)
+    humiditysensor1_global, temperature_global = Adafruit_DHT.read_retry(sensor, pintempyhumedad)
+    
     return temperature_global, humiditysensor1_global
 
 def humedad():
     global humidity_global
-    sensor_value = GPIO.input(analog_pin)
+    GPIO.setup(pin_moisture, GPIO.IN)
+    time.sleep(0.1)
+    sensor_value = GPIO.input(pin_moisture)
     # Conversión del valor analógico a porcentaje de humedad (0-100%)
     humidity_global = (sensor_value / 1023.0) * 100
     return humidity_global
@@ -36,6 +38,7 @@ def humedad():
 
 @app.route('/temperaturayhumedad')
 def sensores():
+    GPIO.output(led_camara, GPIO.LOW)
     # Lectura de temperatura y humedad desde el sensor
     
     hilo1=threading.Thread(target=temperaturahumedad,args=())
@@ -49,7 +52,7 @@ def sensores():
 
     if hilo1 is not None and hilo2 is not None:
         # Renderizar la plantilla HTML con los valores de temperatura y humedad
-        return render_template('temp.html', temperature=temperature_global, humidity=humiditysensor1_global, humidity2=humidity_global)
+        return render_template('temp.html', temperature=temperature_global, humidity=humiditysensor1_global,humidity2=humidity_global)
     else:
          # En caso de fallo al leer el sensor, mostrar un mensaje de error
          return 'Error al leer el sensor DHT11'
@@ -77,17 +80,40 @@ def capture_camera():
     camera.release()
 """
 
-"""
+
+
 @app.route('/video_feed')
 def video_feed():
-    return Response(capture_camera(), mimetype='multipart/x-mixed-replace; boundary=frame')
-"""
+    GPIO.output(led_camara, GPIO.HIGH)
+    #return Response(capture_camera(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return render_template("camara.html")
+
+
+@app.route('/api/endpoint', methods =['GET'])
+def api():
+        fecha_actual = datetime.datetime.now()
+        temperature_global,humidity_global=temperaturahumedad()
+        response = jsonify({"hora":fecha_actual,
+                            "temperatura (celsius)": temperature_global,
+                            "humedad (%)": humidity_global})
+        return response
+
+# Función para apagar el LED y limpiar los pines GPIO
+def apagar_led_pin(signal, frame):
+    GPIO.output(led_pin, GPIO.LOW)  # Apagar el LED
+    GPIO.cleanup()  # Limpiar los pines GPIO
+    sys.exit(0)  # Salir del programa
+
+def apagar_led_camara(signal, frame):
+    GPIO.output(led_camara, GPIO.LOW)  # Apagar el LED
+    GPIO.cleanup()  # Limpiar los pines GPIO
+    sys.exit(0)  # Salir del programa
+
 
 
 @app.route('/')
 def inicio():
-    GPIO.setup(led_pin, GPIO.OUT) #Establecer el puerto con el LED
-    GPIO.output(led_pin, GPIO.HIGH)
+    GPIO.output(led_camara, GPIO.LOW)
     # Obtener el contenido HTML de la página
     url = "https://www.euskalmet.euskadi.eus/el-tiempo/donostia/"
     response = requests.get(url)
@@ -131,5 +157,14 @@ def inicio():
     contenido1_pasadomañana = info_content_div2.text.strip()
     return render_template('inicio.html',contenido_hoy=contenido_hoy, contenido1_hoy=contenido1_hoy, contenido_mañana=contenido_mañana, contenido1_mañana=contenido1_mañana, contenido_pasadomañana=contenido_pasadomañana, contenido1_pasadomañana=contenido1_pasadomañana)
 
+signal.signal(signal.SIGINT, apagar_led_camara)
+signal.signal(signal.SIGINT, apagar_led_pin)
+
+
 if __name__ == '__main__':
+    GPIO.setup(led_pin, GPIO.OUT) #Establecer el puerto con el LED
+    GPIO.output(led_pin, GPIO.HIGH)
+    GPIO.setup(led_camara, GPIO.OUT) #Establecer el puerto con el LED
+
+
     app.run(host='0.0.0.0', port=5000, debug=True)
