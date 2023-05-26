@@ -5,6 +5,7 @@ import Adafruit_DHT
 import time
 import requests
 from bs4 import BeautifulSoup
+import threading
 
 GPIO.setmode(GPIO.BCM)
 analog_pin = 18
@@ -17,18 +18,38 @@ led_pin = 5
 
 app = Flask(__name__)
 
+def temperaturahumedad():
+    global temperature_global, humiditysensor1_global
+    humiditysensor1_global, temperature_global = Adafruit_DHT.read_retry(sensor, pin)
+    GPIO.setup(analog_pin, GPIO.IN)
+    time.sleep(0.1)
+    return temperature_global, humiditysensor1_global
+
+def humedad():
+    global humidity_global
+    sensor_value = GPIO.input(analog_pin)
+    # Conversión del valor analógico a porcentaje de humedad (0-100%)
+    humidity_global = (sensor_value / 1023.0) * 100
+    return humidity_global
+
+
+
 @app.route('/temperaturayhumedad')
 def sensores():
     # Lectura de temperatura y humedad desde el sensor
-    humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-    GPIO.setup(analog_pin, GPIO.IN)
-    time.sleep(0.1)
-    sensor_value = GPIO.input(analog_pin)
-    # Conversión del valor analógico a porcentaje de humedad (0-100%)
-    humidity2 = (sensor_value / 1023.0) * 100
-    if humidity is not None and temperature is not None:
+    
+    hilo1=threading.Thread(target=temperaturahumedad,args=())
+    hilo2=threading.Thread(target=humedad,args=())
+    
+    hilo1.start()
+    hilo2.start()
+    
+    hilo1.join()
+    hilo2.join()
+
+    if hilo1 is not None and hilo2 is not None:
         # Renderizar la plantilla HTML con los valores de temperatura y humedad
-        return render_template('temp.html', temperature=temperature, humidity=humidity,humidity2=humidity2)
+        return render_template('temp.html', temperature=temperature_global, humidity=humiditysensor1_global, humidity2=humidity_global)
     else:
          # En caso de fallo al leer el sensor, mostrar un mensaje de error
          return 'Error al leer el sensor DHT11'
