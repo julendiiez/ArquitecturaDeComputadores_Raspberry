@@ -49,6 +49,9 @@
       height: auto;
       border-radius: 10px;
     }
+    .activo{
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -59,12 +62,12 @@
   <nav>
     <ul>
       <li><a href="/">Inicio</a></li>  
-      <li><a href="/temperaturayhumedad">Datos</a></li>
+      <li><a href="/temperaturayhumedad" class="activo">Datos</a></li>
       <li><a href="/video_feed">Cámara</a></li>
     </ul>
   </nav>
 <body>
-    <h1>Lectura de Temperatura y Humedad</h1>
+    <h2>Lectura de Temperatura y Humedad</h1>
     <p>Temperatura: {{ temperature }}°C</p>
     <p>Humedad: {{ humidity }}%</p>
     <p>Humedad de la tierra: {{ humidity2 }}%</p>
