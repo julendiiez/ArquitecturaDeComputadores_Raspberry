@@ -10,21 +10,24 @@ import threading
 import signal
 import sys
 
-GPIO.setmode(GPIO.BCM)
-pin_moisture = 2
-sensor= Adafruit_DHT.DHT11
-pintempyhumedad = 16
-led_pin = 5
-button_pin=22
-led_camara=18
+
+GPIO.setmode(GPIO.BCM) #Establecer modo de numeracion
+pin_moisture = 2 #Establecer pin del sensor de humedad en tierra
+sensor= Adafruit_DHT.DHT11 #Indicar que se va a usar el sensor de temperatura y humedad
+pintempyhumedad = 16 #Establecer el pin del sensor de temperatura y humedad
+led_pin = 5 #Establecer el pin del LED
+led_camara=18 #Establecen el pin de la camara
+
 app = Flask(__name__)
 
+#Funcion para medir la temperatura y la humedad 
 def temperaturahumedad():
     global temperature_global, humiditysensor1_global
     humiditysensor1_global, temperature_global = Adafruit_DHT.read_retry(sensor, pintempyhumedad)
     
     return temperature_global, humiditysensor1_global
 
+#Funcion para medir la humedad en tierra
 def humedad():
     global humidity_global
     GPIO.setup(pin_moisture, GPIO.IN)
@@ -34,29 +37,7 @@ def humedad():
     humidity_global = (sensor_value / 1023.0) * 100
     return humidity_global
 
-
-
-@app.route('/temperaturayhumedad')
-def sensores():
-    GPIO.output(led_camara, GPIO.LOW)
-    # Lectura de temperatura y humedad desde el sensor
-    
-    hilo1=threading.Thread(target=temperaturahumedad,args=())
-    hilo2=threading.Thread(target=humedad,args=())
-    
-    hilo1.start()
-    hilo2.start()
-    
-    hilo1.join()
-    hilo2.join()
-
-    if hilo1 is not None and hilo2 is not None:
-        # Renderizar la plantilla HTML con los valores de temperatura y humedad
-        return render_template('temp.html', temperature=temperature_global, humidity=humiditysensor1_global,humidity2=humidity_global)
-    else:
-         # En caso de fallo al leer el sensor, mostrar un mensaje de error
-         return 'Error al leer el sensor DHT11'
-
+#Funcion para capturar la camara
 """
 # Capturar video desde la cámara USB
 def capture_camera():
@@ -79,25 +60,6 @@ def capture_camera():
 
     camera.release()
 """
-
-
-
-@app.route('/video_feed')
-def video_feed():
-    GPIO.output(led_camara, GPIO.HIGH)
-    #return Response(capture_camera(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    return render_template("camara.html")
-
-
-@app.route('/api/endpoint', methods =['GET'])
-def api():
-        fecha_actual = datetime.datetime.now()
-        temperature_global,humidity_global=temperaturahumedad()
-        response = jsonify({"hora":fecha_actual,
-                            "temperatura (celsius)": temperature_global,
-                            "humedad (%)": humidity_global})
-        return response
-
 # Función para apagar el LED y limpiar los pines GPIO
 def apagar_led_pin(signal, frame):
     GPIO.output(led_pin, GPIO.LOW)  # Apagar el LED
@@ -109,8 +71,7 @@ def apagar_led_camara(signal, frame):
     GPIO.cleanup()  # Limpiar los pines GPIO
     sys.exit(0)  # Salir del programa
 
-
-
+#Ventana web inicio
 @app.route('/')
 def inicio():
     GPIO.output(led_camara, GPIO.LOW)
@@ -157,13 +118,58 @@ def inicio():
     contenido1_pasadomañana = info_content_div2.text.strip()
     return render_template('inicio.html',contenido_hoy=contenido_hoy, contenido1_hoy=contenido1_hoy, contenido_mañana=contenido_mañana, contenido1_mañana=contenido1_mañana, contenido_pasadomañana=contenido_pasadomañana, contenido1_pasadomañana=contenido1_pasadomañana)
 
+
+#Ventana web de los sensores
+@app.route('/temperaturayhumedad')
+def sensores():
+    GPIO.output(led_camara, GPIO.LOW)
+    # Lectura de temperatura y humedad desde el sensor
+    
+    hilo1=threading.Thread(target=temperaturahumedad,args=())
+    hilo2=threading.Thread(target=humedad,args=())
+    
+    hilo1.start()
+    hilo2.start()
+    
+    hilo1.join()
+    hilo2.join()
+
+    if hilo1 is not None and hilo2 is not None:
+        # Renderizar la plantilla HTML con los valores de temperatura y humedad
+        return render_template('temp.html', temperature=temperature_global, humidity=humiditysensor1_global,humidity2=humidity_global)
+    else:
+         # En caso de fallo al leer el sensor, mostrar un mensaje de error
+         return 'Error al leer el sensor DHT11'
+
+
+
+#Ventana web de la cámara
+@app.route('/video_feed')
+def video_feed():
+    GPIO.output(led_camara, GPIO.HIGH)
+    #return Response(capture_camera(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return render_template("camara.html")
+
+
+#Ventana web de la api
+@app.route('/api/endpoint', methods =['GET'])
+def api():
+        fecha_actual = datetime.datetime.now()
+        temperature_global,humidity_global=temperaturahumedad()
+        response = jsonify({"hora":fecha_actual,
+                            "temperatura (celsius)": temperature_global,
+                            "humedad (%)": humidity_global})
+        return response
+
+
+#Apagar los 2 sensores cuando pare la ejecución del servidor
 signal.signal(signal.SIGINT, apagar_led_camara)
 signal.signal(signal.SIGINT, apagar_led_pin)
 
 
 if __name__ == '__main__':
     GPIO.setup(led_pin, GPIO.OUT) #Establecer el puerto con el LED
-    GPIO.output(led_pin, GPIO.HIGH)
+    GPIO.output(led_pin, GPIO.HIGH) #Encender el led porque se ha puesto en marcha el servidor
     GPIO.setup(led_camara, GPIO.OUT) #Establecer el puerto con el LED
 
 
